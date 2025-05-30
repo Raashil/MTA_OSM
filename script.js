@@ -1,21 +1,60 @@
 // Initialize the map centered on New York City
-const map = L.map('map').setView([40.7128, -74.0060], 13);
+const map = L.map('map', {
+    maxBounds: [
+        [40.45, -74.1], // Southwest coordinates
+        [40.95, -73.7]  // Northeast coordinates
+    ],
+    maxBoundsViscosity: 1.0 // Prevents panning outside bounds
+}).setView([40.7128, -74.0060], 11);
 
 // Add transit map style tiles
 L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20,
+    maxZoom: 18,
+    minZoom: 10,
     attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
     style: 'transit'
 }).addTo(map);
+
+// Color mapping for subway lines
+const lineColors = {
+    '1': '#EE352E', // Red
+    '2': '#EE352E', // Red
+    '3': '#EE352E', // Red
+    '4': '#00933C', // Green
+    '5': '#00933C', // Green
+    '6': '#00933C', // Green
+    '7': '#B933AD', // Purple
+    'A': '#0039A6', // Blue
+    'B': '#FF6319', // Orange
+    'C': '#0039A6', // Blue
+    'D': '#FF6319', // Orange
+    'E': '#0039A6', // Blue
+    'F': '#FF6319', // Orange
+    'G': '#6CBE45', // Light Green
+    'J': '#996633', // Brown
+    'L': '#A7A9AC', // Grey
+    'M': '#FF6319', // Orange
+    'N': '#FCCC0A', // Yellow
+    'Q': '#FCCC0A', // Yellow
+    'R': '#FCCC0A', // Yellow
+    'S': '#808183', // Grey
+    'W': '#FCCC0A', // Yellow
+    'Z': '#996633', // Brown
+    'SIR': '#002D72' // Staten Island Railway Blue
+};
 
 // Store markers for search functionality
 const stationMarkers = {};
 
 // Add markers for each station
 stations.forEach(station => {
+    // Get the first line color for the station
+    const firstLine = station.lines[0];
+    const lineColor = lineColors[firstLine] || '#000000';
+
     const marker = L.circleMarker(station.coordinates, {
         radius: 6,
-        fillColor: '#fff',
+        fillColor: lineColor,
         color: '#000',
         weight: 2,
         opacity: 1,
@@ -24,7 +63,9 @@ stations.forEach(station => {
     .bindPopup(`
         <b>${station.name}</b><br>
         Lines: ${station.lines.join(', ')}<br>
-        <a href="#" class="ppt-link" data-station="${station.name}">PPT</a>
+        <a href="${station.pptLink}" class="ppt-button" target="_blank">
+            <i class="fas fa-file-powerpoint"></i>View PPT
+        </a>
     `);
 
     // Store marker for search
@@ -32,17 +73,6 @@ stations.forEach(station => {
 
     marker.on('click', () => {
         showStationInfo(station);
-    });
-
-    // Add click event for PPT link
-    marker.on('popupopen', () => {
-        const pptLink = document.querySelector(`.ppt-link[data-station="${station.name}"]`);
-        if (pptLink) {
-            pptLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log(`PPT clicked for ${station.name}`);
-            });
-        }
     });
 });
 
